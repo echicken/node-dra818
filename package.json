@@ -1,0 +1,27 @@
+{	"name" : "dra818",
+	"version" : "1.0.0",
+	"license" : "Shareware :|",
+	"description" : "Control a Dorji DRA818 module on a serial port.",
+	"author" : {
+		"name" : "echicken",
+		"email" : "echicken@bbs.electronicchicken.com"
+	},
+	"main" : "./index.js",
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/echicken/node-dra818.git"
+	},
+	"dependencies" : {
+		"serialport" : ">= 2.1.0"
+	},
+	"engines" : {
+		"node" : ">= 5.12.0"
+	},
+	"keywords" : [
+		"dorji",
+		"DRA818",
+		"DRA818V",
+		"DRA818U",
+		"radio"
+	]
+}

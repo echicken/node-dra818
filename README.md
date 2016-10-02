@@ -42,32 +42,32 @@ radio.open(
 
 ### Module properties
 
-	- volume
-	- squelch
-	- narrow
-	- CSS
-	- txTCS
-	- rxTCS
-	- txDCS
-	- rxDCS
-	- tailtone
-	- emphasis
-	- highpass
-	- lowpass
-	- rxFrequency
-	- txFrequency
+- volume
+- squelch
+- narrow
+- CSS
+- txTCS
+- rxTCS
+- txDCS
+- rxDCS
+- tailtone
+- emphasis
+- highpass
+- lowpass
+- rxFrequency
+- txFrequency
 
 ### Module methods
 
-	- open(callback)
-	- close(callback)
-	- getRSSI(callback)
+- open(callback)
+- close(callback)
+- getRSSI(callback)
 
 ### Module events
 
-	- error
-	- disconnect
-	- close
+- error
+- disconnect
+- close
 
 ### Notes on CTCSS and CDCSS
 

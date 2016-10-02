@@ -100,6 +100,7 @@ DRA818.Module = function (port, type) {
 					);
 				} else {
 					settings[setting] = value;
+					self.emit('change', setting, value);
 				}
 			}
 		);
@@ -112,7 +113,7 @@ DRA818.Module = function (port, type) {
 				set : function (value) {
 					value = parseInt(value);
 					if (isNaN(value) || value < min || value > max) {
-						self.emit('error', 'Invalid ' + setting + ': ' + value);
+						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
 					if (pad > 0) {
@@ -123,6 +124,7 @@ DRA818.Module = function (port, type) {
 						expect(setting, value, response);
 					} else {
 						settings[setting] = value;
+						self.emit('change', setting, value);
 					}
 					if (typeof command === 'string') {
 						self.handle.write(command + value + '\r\n');
@@ -141,7 +143,7 @@ DRA818.Module = function (port, type) {
 				set : function (value) {
 					value = parseFloat(value);
 					if (isNaN(value) || value < min || value > max) {
-						self.emit('error', 'Invalid ' + setting + ': ' + value);
+						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
 					value = value.toFixed(4);
@@ -158,7 +160,7 @@ DRA818.Module = function (port, type) {
 				get : function () { return settings[setting]; },
 				set : function (value) {
 					if (typeof value !== 'boolean') {
-						self.emit('error', 'Invalid ' + setting + ': ' + value);
+						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
 					expect(setting, value, response);
@@ -178,7 +180,7 @@ DRA818.Module = function (port, type) {
 				get : function () { return settings[setting]; },
 				set : function (value) {
 					if (arr.indexOf(value) < 0) {
-						self.emit('error', 'Invalid ' + setting + ': ' + value);
+						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
 					expect(setting, value, response);

@@ -285,7 +285,7 @@ DRA818.Module = function (port, type) {
 				callback();
 			}
 		);
-		this.handle.open((err) => { console.log(err); });
+		this.handle.open((e) => { if (e !== null) this.emit('error', e); });
 	}
 
 	this.close = this.handle.close;

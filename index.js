@@ -1,6 +1,6 @@
 const util = require('util');
 const EventEmitter = require('events').EventEmitter;
-const SerialPort = require('serialport').SerialPort;
+const SerialPort = require('serialport');
 
 const DCS_CODES = [
 	"023I", "025I", "026I", "031I", "032I", "043I", "047I", "051I", "065I",
@@ -34,15 +34,14 @@ DRA818.Module = function (port, type) {
 
 	var self = this;
 	EventEmitter.call(this);
-	
-	this.handle = new SerialPort(port, { autoOpen : false });
 
-	// Re-throw SerialPort events except 'open' and 'data'
-	this.handle.on('error', (err) => { this.emit('error', err); });
-	this.handle.on('disconnect', (err) => { this.emit('disconnect', err); });
-	this.handle.on('close', () => { this.emit('close'); });
+	var commandQueue = [],
+		responseQueue = [],
+		settingsQueue = [],
+		waiting = false;
 
 	var settings = {
+		open : false,
 		volume : 4,
 		squelch : 4,
 		narrow : true,
@@ -63,46 +62,80 @@ DRA818.Module = function (port, type) {
 		'settings' above if we get success message from the DRA818 module. */
 	var _settings = {};
 	Object.keys(settings).forEach((k) => { _settings[k] = settings[k]; });
+	
+	this.handle = new SerialPort(port, { autoOpen : false });
 
-	function setGroup() {
-		self.handle.write(
-			util.format(
-				'AT+DMOSETGROUP=%s,%s,%s,%s,%s,%s\r\n',
-				_settings.narrow ? 0 : 1,
-				_settings.txFrequency,
-				_settings.rxFrequency,
-				_settings.CSS === DRA818.TCS ? _settings.txTCS : _settings.txDCS,
-				_settings.squelch,
-				_settings.CSS === DRA818.TCS ? _settings.rxTCS : _settings.rxDCS
-			)
-		);
-	}
-
-	function setFilters() {
-		self.handle.write(
-			util.format(
-				'AT+SETFILTER=%s,%s,%s\r\n',
-				_settings.emphasis ? 1 : 0,
-				_settings.highpass ? 1 : 0,
-				_settings.lowpass ? 1 : 0
-			)
-		);
-	}
-
-	function expect(setting, value, expected, command) {
-		_settings[setting] = value;
-		self.handle.once(
-			'data', (data) => {
-				console.log(data.toString().trim());
-				if (data.toString().trim() !== expected) {
-					self.emit(
-						'error', 'Failed to set ' + setting + ' to ' + value
-					);
+	this.handle.on(
+		'data', (data) => {
+			data = data.toString().trim();
+			if (responseQueue.length < 1) {
+				this.emit('error', 'Response without command: ' + data);
+			} else {
+				var expected = responseQueue.shift();
+				var setting = settingsQueue.shift();
+				if (data === expected) {
+					settings[setting] = _settings[setting];
+					this.emit('change', setting, settings[setting]);
 				} else {
-					settings[setting] = value;
-					self.emit('change', setting, value);
+					this.emit(
+						'error',
+						'Failed to set ' + setting + ', ' + _settings[setting] +
+						 ': ' + data
+					);
 				}
 			}
+			waiting = false;
+			_sendCommand();
+		}
+	);
+
+	// Re-throw SerialPort events except 'open' and 'data'
+	this.handle.on('error', (err) => { this.emit('error', err); });
+	this.handle.on('disconnect', (err) => { this.emit('disconnect', err); });
+	this.handle.on('close', () => { this.emit('close'); });
+
+	function _sendCommand() {
+		if (!waiting && commandQueue.length > 0) {
+			var command = commandQueue.shift();
+			if (typeof command === 'function') command = command();
+			self.handle.write(command + '\r\n');
+			waiting = true;
+		}
+	}
+
+	function sendCommand(command, response, setting, value) {
+		if (typeof command !== 'function' && setting !== 'open') {
+			if (typeof value === 'boolean') {
+				command += (value ? 1 : 0);
+			} else {
+				command += value;
+			}
+		}
+		commandQueue.push(command);
+		responseQueue.push(response);
+		settingsQueue.push(setting);
+		_settings[setting] = value;
+		_sendCommand();
+	}
+
+	function getSetGroupCommand() {
+		return util.format(
+			'AT+DMOSETGROUP=%s,%s,%s,%s,%s,%s',
+			_settings.narrow ? 0 : 1,
+			_settings.txFrequency,
+			_settings.rxFrequency,
+			_settings.CSS === DRA818.TCS ? _settings.txTCS : _settings.txDCS,
+			_settings.squelch,
+			_settings.CSS === DRA818.TCS ? _settings.rxTCS : _settings.rxDCS
+		);
+	}
+
+	function getSetFilterCommand() {
+		return util.format(
+			'AT+SETFILTER=%s,%s,%s',
+			_settings.emphasis ? 1 : 0,
+			_settings.highpass ? 1 : 0,
+			_settings.lowpass ? 1 : 0
 		);
 	}
 
@@ -121,15 +154,10 @@ DRA818.Module = function (port, type) {
 						while (value.length < pad) { value = '0' + value; }
 					}
 					if (response !== null) {
-						expect(setting, value, response);
+						sendCommand(command, response, setting, value);
 					} else {
 						settings[setting] = value;
 						self.emit('change', setting, value);
-					}
-					if (typeof command === 'string') {
-						self.handle.write(command + value + '\r\n');
-					} else if (typeof command === 'function') {
-						command();
 					}
 				}
 			}
@@ -147,8 +175,7 @@ DRA818.Module = function (port, type) {
 						return;
 					}
 					value = value.toFixed(4);
-					expect(setting, value, response);
-					command();
+					sendCommand(command, response, setting, value);
 				}
 			}
 		);
@@ -163,12 +190,7 @@ DRA818.Module = function (port, type) {
 						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
-					expect(setting, value, response);
-					if (typeof command === 'string') {
-						self.handle.write(command + (value ? 1 : 0) + '\r\n');
-					} else if (typeof command === 'function') {
-						command();
-					}
+					sendCommand(command, response, setting, value);
 				}
 			}
 		);
@@ -183,50 +205,40 @@ DRA818.Module = function (port, type) {
 						throw 'Invalid ' + setting + ': ' + value;
 						return;
 					}
-					expect(setting, value, response);
-					command();
+					sendCommand(command, response, setting, value);
 				}
 			}
 		);
 	}
 
 	getSetInt('volume', 1, 8, 0, 'AT+DMOSETVOLUME=', '+DMOSETVOLUME:0');
-	getSetInt('squelch', 0, 8, 0, setGroup, '+DMOSETGROUP:0');
-	getSetInt('rxTCS', 0, 38, 4, setGroup, '+DMOSETGROUP:0');
-	getSetInt('txTCS', 0, 38, 4, setGroup, '+DMOSETGROUP:0');
+	getSetInt('squelch', 0, 8, 0, getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetInt('rxTCS', 0, 38, 4, getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetInt('txTCS', 0, 38, 4, getSetGroupCommand, '+DMOSETGROUP:0');
 	getSetInt('CSS', 0, 1, 0, null, null);
 
 	if (type === DRA818.VHF) {
-		getSetFloat('txFrequency', 134, 174, setGroup, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 134, 174, setGroup, '+DMOSETGROUP:0');
+		getSetFloat('txFrequency', 134, 174, getSetGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxFrequency', 134, 174, getSetGroupCommand, '+DMOSETGROUP:0');
 	} else {
-		getSetFloat('txFrequency', 400, 480, setGroup, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 400, 480, setGroup, '+DMOSETGROUP:0');		
+		getSetFloat('txFrequency', 400, 480, getSetGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxFrequency', 400, 480, getSetGroupCommand, '+DMOSETGROUP:0');		
 	}
 
-	getSetBool('narrow', setGroup, '+DMOSETGROUP:0');
-	getSetBool('emphasis', setFilters, '+DMOSETFILTER:0');
-	getSetBool('highpass', setFilters, '+DMOSETFILTER:0');
-	getSetBool('lowpass', setFilters, '+DMOSETFILTER:0');
+	getSetBool('narrow', getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetBool('emphasis', getSetFilterCommand, '+DMOSETFILTER:0');
+	getSetBool('highpass', getSetFilterCommand, '+DMOSETFILTER:0');
+	getSetBool('lowpass', getSetFilterCommand, '+DMOSETFILTER:0');
 	getSetBool('tailtone', 'AT+SETFILTER=', '+DMOSETFILTER:0');
 
-	getSetString('txDCS', DCS_CODES, setGroup, '+DMOSETGROUP:0');
-	getSetString('rxDCS', DCS_CODES, setGroup, '+DMOSETGROUP:0');
+	getSetString('txDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetString('rxDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
 
 	this.open = function (callback) {
 		this.handle.on(
 			'open', () => {
-				this.handle.once(
-					'data', (data) => {
-						data = data.toString().trim();
-						if (data !== '+DMOCONNECT:0') {
-							callback('Failed to connect to radio: ' + data);
-						} else {
-							callback(null);
-						}
-					}
-				);
-				this.handle.write('AT+DMOCONNECT\r\n');
+				sendCommand('AT+DMOCONNECT', '+DMOCONNECT:0', 'open', true);
+				callback();
 			}
 		);
 		this.handle.open((err) => { console.log(err); });
@@ -234,19 +246,19 @@ DRA818.Module = function (port, type) {
 
 	this.close = this.handle.close;
 
-	this.getRSSI = function (callback) {
-		this.handle.once(
-			'data', (data) => {
-				var rssi = data.toString().trim().match(/^RSSI=(\d+)$/);
-				if (rssi === null) {
-					callback(data.toString().trim(), null);
-				} else {
-					callback(null, parseInt(rssi[1]));
-				}
-			}
-		);
-		this.handle.write('RSSI?\r\n');
-	}
+	// this.getRSSI = function (callback) {
+	// 	this.handle.once(
+	// 		'data', (data) => {
+	// 			var rssi = data.toString().trim().match(/^RSSI=(\d+)$/);
+	// 			if (rssi === null) {
+	// 				callback(data.toString().trim(), null);
+	// 			} else {
+	// 				callback(null, parseInt(rssi[1]));
+	// 			}
+	// 		}
+	// 	);
+	// 	sendCommand('RSSI?');
+	// }
 
 }
 util.inherits(DRA818.Module, EventEmitter);

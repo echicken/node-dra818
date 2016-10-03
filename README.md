@@ -134,30 +134,12 @@ radio.open(
 
 ### Notes on the model
 
-This module uses properties of the DRA818.Module object, with getters and
-setters, to adjust the settings of a DRA818 module.  When you set a property,
-the relevant command is immediately sent over the serial port.  If the module
-responds with an error, an 'error' event will be fired.  If the module reports
-that the command was successful, a 'change' event will be fired, confirming the
-new setting, and your DRA818.Module's corresponding property will be updated to
-reflect the new setting.
-
-Efforts are made to validate settings before commands are sent to the module, so
-it is unlikely that the DRA818 will ever respond with an error.  If you attempt
-to set a property to an illegal value, an exception will be thrown.  In other
-words, it's fairly safe to assume that when you set a property, the command will
-succeed, so you can choose to ignore the 'change' event if you wish.
-
-There's a bit of inefficiency here in the cases of the DMOSETGROUP and
-DMOSETFILTER commnads, which apply several settings at once.  For example, if
-you alter the transmit frequency, receive frequency, and squelch setting of your
-DRA818.Module object, three commands will be sent over the serial port even
-though this could all be accomplished in one go.  Since this all happens quickly
-anyhow, I haven't had any problems with it.
-
 I might have used methods and callbacks instead of getters and setters, but it
-seemed more natural to present the settings as properties instead.
+seemed more natural to present the settings as properties instead. If you'd
+prefer a method/callback interface for changing each setting, or want to be able
+to issue the DMOSETGROUP or DMOSETFILTER command and change multiple settings
+all in one shot, let me know and I'll look at adding it.
 
-If you'd prefer a method/callback interface for changing each setting, or want
-to be able to issue the DMOSETGROUP or DMOSETFILTER command and change multiple
-settings all in one shot, let me know and I'll look at adding it.
+The two drawbacks of the current model are that:
+- If a problem is encountered when applying a setting to the radio module, you won't find out about it until a 'changeError' event is fired.  It might be preferable to call, say, radio.setRxFrequency(value, callback), and then react to an error, if present, in your callback.  However, this module makes an effort to prevent you from supplying the DRA818 with settings that could produce an error - so barring problems with your DRA818 itself or trouble with the serial connection, this shouldn't happen.
+- The DRA818 takes several settings all at once via the AT+DMOSETGROUP and AT+DMOSETFILTER commmands.  In order to change the receive frequency, we must send the desired bandwidth setting, receive frequency, transmit frequency, rx and tx CTCSS/CDCSS codes, and squelch level in one line.  If you change several of these settings in a row, the same command, with slight variation, will be sent several times.  This happens quickly enough to not be a problem, but it's inefficient and that bugs me.  I may add some additional methods to deal with this, but it hardly seems worthwhile.

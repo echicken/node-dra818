@@ -81,7 +81,7 @@ radio.open(
 		- A DCS code (eg. "023I" or "023N"); must match one of the codes specified in DCS_CODES (see index.js)
 		- A Motorola PL tone name (eg. "XZ", "M1"); must match one of the codes specified in TONE_MAP
 - tailtone
-	- Boolean true to turn on the 'tailtone' function, false otherwise
+	- Boolean, true to turn on the 'tailtone' function, false otherwise
 - emphasis
 	- Boolean, enable or disable the pre/de-emphasis filter
 - highpass

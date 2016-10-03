@@ -95,20 +95,16 @@ radio.open(
 	- Boolean, enable or disable the low-pass filter
 - rxF
 	- Float, up to four digits of precision
-	- The receive frequency
+	- The receive frequency, in MHz
 	- Must be within the frequency range of the DRA818 module
-		- DRA818V
-			- 134.0000 to 174.0000
-		- DRA818U/M
-			- 400.0000 to 480.0000
+		- DRA818V: 134.0000 to 174.0000
+		- DRA818U/M: 400.0000 to 480.0000
 - txF
 	- Float, up to four digits of precision
-	- The transmit frequency
+	- The transmit frequency, in MHz
 	- Must be within the frequency range of the DRA818 module
-		- DRA818V
-			- 134.0000 to 174.0000
-		- DRA818U/M
-			- 400.0000 to 480.0000
+		- DRA818V: 134.0000 to 174.0000
+		- DRA818U/M: 400.0000 to 480.0000
 - rssi
 	- Integer in the range of 0 - 255
 	- Received Signal Strength Indicator

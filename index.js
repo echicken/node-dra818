@@ -2,7 +2,7 @@ const util = require('util');
 const EventEmitter = require('events').EventEmitter;
 const SerialPort = require('serialport');
 
-const CSS_CODES = [
+const TCS_CODES = [
 	"0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008",	"0009",
 	"0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018",
 	"0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027",
@@ -47,7 +47,14 @@ const DCS_CODES = [
 	"664N", "703N", "712N", "723N", "731N", "732N", "734N", "743N", "754N"
 ];
 
-DRA818 = { VHF : 0, UHF : 1 };
+DRA818 = {
+	VHF : 0,
+	UHF : 1,
+	TCS_CODES : TCS_CODES,
+	TONE_MAP : TONE_MAP,
+	PL_MAP : PL_MAP,
+	DCS_CODES : DCS_CODES
+};
 
 DRA818.Module = function (port, type) {
 
@@ -218,7 +225,7 @@ DRA818.Module = function (port, type) {
 
 	function setCSS(setting, value) {
 		if (typeof value === 'string') {
-			if (CSS_CODES.indexOf(value) >= 0) {
+			if (TCS_CODES.indexOf(value) >= 0) {
 				sendCommand(setGroupCommand, '+DMOSETGROUP:0', setting, value);
 			} else if (DCS_CODES.indexOf(value) >= 0) {
 				sendCommand(setGroupCommand, '+DMOSETGROUP:0', setting, value);
@@ -227,7 +234,7 @@ DRA818.Module = function (port, type) {
 					setGroupCommand,
 					'+DMOSETGROUP:0',
 					setting,
-					CSS_CODES[PL_MAP.indexOf(value)]
+					TCS_CODES[PL_MAP.indexOf(value)]
 				);
 			} else {
 				throw 'Invalid ' + setting + ': ' + value;
@@ -244,7 +251,7 @@ DRA818.Module = function (port, type) {
 					setGroupCommand,
 					'+DMOSETGROUP:0',
 					setting,
-					CSS_CODES[TONE_MAP.indexOf(value)]
+					TCS_CODES[TONE_MAP.indexOf(value)]
 				);
 			} else {
 				throw 'Invalid ' + setting + ': ' + value;

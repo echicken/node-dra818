@@ -53,6 +53,14 @@ radio.open(
 		- When making a Module, pass this as the 'type' argument if using a DRA818V
 	- UHF
 		- When making a Module, pass this as the 'type' argument if using a DRA818U or DRA818M
+	- TCS_CODES
+		- An array of valid CTCSS codes for use with DRA818.Module[rxS, txS]
+	- TONE_MAP
+		- An array of valid CTCSS frequencies for use with DRA818.Module[rxS, txS]
+	- PL_MAP
+		- An array of valid Motorla PL tone names for use with DRA818.Module[rxS, txS]
+	- DCS_CODES
+		- An array of valid CDCSS codes for use with DRA818.Module[rxS, txS]
 	- Module(port, type)
 		- Module constructor, where 'port' is a serial port (eg. 'COM4' or '/dev/ttyS0') and 'type' is one of DRA818.VHF or DRA818.UHF
 

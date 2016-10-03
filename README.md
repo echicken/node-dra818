@@ -34,8 +34,8 @@ radio.open(
 		try {
 			radio.volume = 4;
 			radio.narrow = true;
-			radio.rxFrequency = 146.52;
-			radio.txFrequency = 146.52;
+			radio.rxF = 146.52;
+			radio.txF = 146.52;
 			radio.CSS = DRA818.TCS;
 			radio.rxTCS = 0;
 			radio.txTCS = 0;
@@ -86,21 +86,29 @@ radio.open(
 	- String describing the DCS code in use on the receive frequency
 	- See the DCS_CODES array in index.js for possible values
 - tailtone
-	- Boolean, set to true to turn on the 'tailtone' function, false otherwise
+	- Boolean true to turn on the 'tailtone' function, false otherwise
 - emphasis
 	- Boolean, enable or disable the pre/de-emphasis filter
 - highpass
 	- Boolean, enable or disable the high-pass filter
 - lowpass
 	- Boolean, enable or disable the low-pass filter
-- rxFrequency
-	- Float, the receive frequency
-	- Up to four digits of precision
-	- Must be within the frequency range of the module
-- txFrequency
-	- Float, the transmit frequency
-	- Up to four digits of precision
-	- Must be within the frequency range of the module
+- rxF
+	- Float, up to four digits of precision
+	- The receive frequency
+	- Must be within the frequency range of the DRA818 module
+		- DRA818V
+			- 134.0000 to 174.0000
+		- DRA818U/M
+			- 400.0000 to 480.0000
+- txF
+	- Float, up to four digits of precision
+	- The transmit frequency
+	- Must be within the frequency range of the DRA818 module
+		- DRA818V
+			- 134.0000 to 174.0000
+		- DRA818U/M
+			- 400.0000 to 480.0000
 - rssi
 	- Integer in the range of 0 - 255
 	- Received Signal Strength Indicator

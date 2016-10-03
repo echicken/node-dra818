@@ -45,8 +45,8 @@ DRA818.Module = function (port, type) {
 		volume : 4,
 		squelch : 4,
 		narrow : true,
-		txFrequency : type === DRA818.VHF ? '146.5200' : '446.0000',
-		rxFrequency : type === DRA818.VHF ? '146.5200' : '446.0000',
+		txF : type === DRA818.VHF ? '146.5200' : '446.0000',
+		rxF : type === DRA818.VHF ? '146.5200' : '446.0000',
 		CSS : DRA818.TCS,
 		txTCS : '0000',
 		rxTCS : '0000',
@@ -126,8 +126,8 @@ DRA818.Module = function (port, type) {
 		return util.format(
 			'AT+DMOSETGROUP=%s,%s,%s,%s,%s,%s',
 			_settings.narrow ? 0 : 1,
-			_settings.txFrequency,
-			_settings.rxFrequency,
+			_settings.txF,
+			_settings.rxF,
 			_settings.CSS === DRA818.TCS ? _settings.txTCS : _settings.txDCS,
 			_settings.squelch,
 			_settings.CSS === DRA818.TCS ? _settings.rxTCS : _settings.rxDCS
@@ -222,11 +222,11 @@ DRA818.Module = function (port, type) {
 	getSetInt('CSS', 0, 1, 0, null, null);
 
 	if (type === DRA818.VHF) {
-		getSetFloat('txFrequency', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('txF', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxF', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
 	} else {
-		getSetFloat('txFrequency', 400, 480, setGroupCommand, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 400, 480, setGroupCommand, '+DMOSETGROUP:0');		
+		getSetFloat('txF', 400, 480, setGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxF', 400, 480, setGroupCommand, '+DMOSETGROUP:0');		
 	}
 
 	getSetBool('narrow', setGroupCommand, '+DMOSETGROUP:0');

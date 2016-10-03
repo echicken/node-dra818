@@ -20,6 +20,15 @@ radio.on(
 	}
 );
 
+radio.on(
+	'changeError', (setting, value) => {
+		console.log('Failed to change ' + setting + ' to ' + value);
+		// Reset and retry?
+		radio.init();
+		radio[setting] = value;
+	}
+);
+
 radio.open(
 	() => {
 		try {
@@ -108,11 +117,17 @@ radio.open(
 - close(callback)
 	- Close the serial port
 	- Callback receives no arguments
+- init()
+	- Sends the AT+DMOCONNECT command to the module and expects a +DMOCONNECT:0 response.
+	- Use it to 'reset' the module after an error (can't remember if this is necessary)
+	- This method is called automatically by DRA818.Module.open()
 
 ### Module events
 
 - change
 	- A setting was changed successfully.  Your callback will receive two arguments: the name of the setting, and the new value
+- changeError
+	- A new setting was not applied successfully.  Your callback will receive two arguments: the name of the setting, and the value that you tried to set it to
 - rssi
 	- The Received Signal Strength Indicator has been read from the module.  Your callback will receive one argument: the RSSI value, an integer in the range of 0 - 255
 - error

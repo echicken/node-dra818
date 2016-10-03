@@ -89,11 +89,7 @@ DRA818.Module = function (port, type) {
 					settings[setting] = _settings[setting];
 					this.emit('change', setting, settings[setting]);
 				} else {
-					this.emit(
-						'error',
-						'Failed to set ' + setting + ', ' + _settings[setting] +
-						 ': ' + data
-					);
+					this.emit('changeError', setting, settings[setting]);
 				}
 			}
 			waiting = false;
@@ -117,11 +113,7 @@ DRA818.Module = function (port, type) {
 
 	function sendCommand(command, response, setting, value) {
 		if (typeof command !== 'function' && setting !== 'open') {
-			if (typeof value === 'boolean') {
-				command += (value ? 1 : 0);
-			} else {
-				command += value;
-			}
+			command += (typeof value === 'boolean' ? (value ? 1 : 0) : value);
 		}
 		commandQueue.push(command);
 		responseQueue.push(response);
@@ -130,7 +122,7 @@ DRA818.Module = function (port, type) {
 		_sendCommand();
 	}
 
-	function getSetGroupCommand() {
+	function setGroupCommand() {
 		return util.format(
 			'AT+DMOSETGROUP=%s,%s,%s,%s,%s,%s',
 			_settings.narrow ? 0 : 1,
@@ -142,7 +134,7 @@ DRA818.Module = function (port, type) {
 		);
 	}
 
-	function getSetFilterCommand() {
+	function setFilterCommand() {
 		return util.format(
 			'AT+SETFILTER=%s,%s,%s',
 			_settings.emphasis ? 1 : 0,
@@ -224,27 +216,27 @@ DRA818.Module = function (port, type) {
 	}
 
 	getSetInt('volume', 1, 8, 0, 'AT+DMOSETVOLUME=', '+DMOSETVOLUME:0');
-	getSetInt('squelch', 0, 8, 0, getSetGroupCommand, '+DMOSETGROUP:0');
-	getSetInt('rxTCS', 0, 38, 4, getSetGroupCommand, '+DMOSETGROUP:0');
-	getSetInt('txTCS', 0, 38, 4, getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetInt('squelch', 0, 8, 0, setGroupCommand, '+DMOSETGROUP:0');
+	getSetInt('rxTCS', 0, 38, 4, setGroupCommand, '+DMOSETGROUP:0');
+	getSetInt('txTCS', 0, 38, 4, setGroupCommand, '+DMOSETGROUP:0');
 	getSetInt('CSS', 0, 1, 0, null, null);
 
 	if (type === DRA818.VHF) {
-		getSetFloat('txFrequency', 134, 174, getSetGroupCommand, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 134, 174, getSetGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('txFrequency', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxFrequency', 134, 174, setGroupCommand, '+DMOSETGROUP:0');
 	} else {
-		getSetFloat('txFrequency', 400, 480, getSetGroupCommand, '+DMOSETGROUP:0');
-		getSetFloat('rxFrequency', 400, 480, getSetGroupCommand, '+DMOSETGROUP:0');		
+		getSetFloat('txFrequency', 400, 480, setGroupCommand, '+DMOSETGROUP:0');
+		getSetFloat('rxFrequency', 400, 480, setGroupCommand, '+DMOSETGROUP:0');		
 	}
 
-	getSetBool('narrow', getSetGroupCommand, '+DMOSETGROUP:0');
-	getSetBool('emphasis', getSetFilterCommand, '+DMOSETFILTER:0');
-	getSetBool('highpass', getSetFilterCommand, '+DMOSETFILTER:0');
-	getSetBool('lowpass', getSetFilterCommand, '+DMOSETFILTER:0');
+	getSetBool('narrow', setGroupCommand, '+DMOSETGROUP:0');
+	getSetBool('emphasis', setFilterCommand, '+DMOSETFILTER:0');
+	getSetBool('highpass', setFilterCommand, '+DMOSETFILTER:0');
+	getSetBool('lowpass', setFilterCommand, '+DMOSETFILTER:0');
 	getSetBool('tailtone', 'AT+SETFILTER=', '+DMOSETFILTER:0');
 
-	getSetString('txDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
-	getSetString('rxDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
+	getSetString('txDCS', DCS_CODES, setGroupCommand, '+DMOSETGROUP:0');
+	getSetString('rxDCS', DCS_CODES, setGroupCommand, '+DMOSETGROUP:0');
 
 	Object.defineProperty(
 		this, 'rssi', {
@@ -278,10 +270,15 @@ DRA818.Module = function (port, type) {
 		}
 	);
 
+	this.init = function () {
+		settings.open = false;
+		sendCommand('AT+DMOCONNECT', '+DMOCONNECT:0', 'open', true);
+	}
+
 	this.open = function (callback) {
 		this.handle.on(
 			'open', () => {
-				sendCommand('AT+DMOCONNECT', '+DMOCONNECT:0', 'open', true);
+				this.init();
 				callback();
 			}
 		);

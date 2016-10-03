@@ -96,25 +96,29 @@ radio.open(
 	- Float, the transmit frequency
 	- Up to four digits of precision
 	- Must be within the frequency range of the module
+- rssi
+	- Integer in the range of 0 - 255
+	- Received Signal Strength Indicator
+- rssiInterval
+	- Integer >= 0
+	- How often to poll the DRA818 module for the RSSI value
+	- Set to 0 to disable polling
 
 ### Module methods
 
 - open(callback)
 	- Open the serial port and connect to the module
-	- Callback receives an error argument, which is null upon success
+	- Callback is called with no arguments after the serial port has been opened
 - close(callback)
 	- Close the serial port
 	- Callback receives no arguments
-- getRSSI(callback)
-	- Get the Received Signal Strength Indicator
-	- Callback receives two arguments, error and RSSI
-		- If error is null, RSSI will be an integer in the range of 0 - 255
-		- If error is not null, RSSI couldn't be read and will be null
 
 ### Module events
 
 - change
-	- A setting was changed successfully.  Your callback will receive two arguments: the name of the setting, and the new value.
+	- A setting was changed successfully.  Your callback will receive two arguments: the name of the setting, and the new value
+- rssi
+	- The Received Signal Strength Indicator has been read from the module.  Your callback will receive one argument: the RSSI value, an integer in the range of 0 - 255
 - error
 	- Something went wrong; your callback will get an error argument
 - disconnect

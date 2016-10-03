@@ -58,6 +58,12 @@ DRA818.Module = function (port, type) {
 		lowpass : false
 	};
 
+	var rssi = {
+		value : 0,
+		interval : 0,
+		evt : null
+	};
+
 	/*	Shadow settings object; these settings will be applied to
 		'settings' above if we get success message from the DRA818 module. */
 	var _settings = {};
@@ -68,6 +74,12 @@ DRA818.Module = function (port, type) {
 	this.handle.on(
 		'data', (data) => {
 			data = data.toString().trim();
+			var rssi = data.match(/^RSSI=(\d+)$/);
+			if (rssi !== null) {
+				rssi.value = parseInt(rssi[1]);
+				self.emit('rssi', rssi.value);
+				return;
+			}
 			if (responseQueue.length < 1) {
 				this.emit('error', 'Response without command: ' + data);
 			} else {
@@ -234,6 +246,38 @@ DRA818.Module = function (port, type) {
 	getSetString('txDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
 	getSetString('rxDCS', DCS_CODES, getSetGroupCommand, '+DMOSETGROUP:0');
 
+	Object.defineProperty(
+		this, 'rssi', {
+			get : function () { return rssi.value; },
+			set : function () {}
+		}
+	);
+
+	Object.defineProperty(
+		this, 'rssiInterval', {
+			get : function () { return rssi.interval; },
+			set : function (value) {
+				value = parseInt(value);
+				if (isNaN(value) || value < 0) {
+					throw 'Invalid rssiInterval setting: ' + value;
+					return;
+				}
+				if (rssi.evt !== null) {
+					clearInterval(rssi.evt);
+					rssi.evt = null;
+				}
+				if (value > 0) {
+					rssi.evt = setInterval(
+						() => {
+							self.handle.write('RSSI?\r\n');
+						},
+						value
+					);
+				}
+			}
+		}
+	);
+
 	this.open = function (callback) {
 		this.handle.on(
 			'open', () => {
@@ -245,20 +289,6 @@ DRA818.Module = function (port, type) {
 	}
 
 	this.close = this.handle.close;
-
-	// this.getRSSI = function (callback) {
-	// 	this.handle.once(
-	// 		'data', (data) => {
-	// 			var rssi = data.toString().trim().match(/^RSSI=(\d+)$/);
-	// 			if (rssi === null) {
-	// 				callback(data.toString().trim(), null);
-	// 			} else {
-	// 				callback(null, parseInt(rssi[1]));
-	// 			}
-	// 		}
-	// 	);
-	// 	sendCommand('RSSI?');
-	// }
 
 }
 util.inherits(DRA818.Module, EventEmitter);

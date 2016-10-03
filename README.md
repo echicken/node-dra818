@@ -21,22 +21,18 @@ radio.on(
 );
 
 radio.open(
-	(err) => {
-		if (err !== null) {
+	() => {
+		try {
+			radio.volume = 4;
+			radio.narrow = true;
+			radio.rxFrequency = 146.52;
+			radio.txFrequency = 146.52;
+			radio.CSS = DRA818.TCS;
+			radio.rxTCS = 0;
+			radio.txTCS = 0;
+			radio.squelch = 0;
+		} catch (err) {
 			console.log(err);
-		} else {
-			try {
-				radio.volume = 4;
-				radio.narrow = true;
-				radio.rxFrequency = 146.52;
-				radio.txFrequency = 146.52;
-				radio.CSS = DRA818.TCS;
-				radio.rxTCS = 0;
-				radio.txTCS = 0;
-				radio.squelch = 0;
-			} catch (err) {
-				console.log(err);
-			}
 		}
 	}
 );

@@ -87,7 +87,7 @@ radio.open(
 		- Use a particular CTCSS tone, by frequency in Hz; must match one of the tones specified in TONE_MAP (see index.js)
 	- String
 		- A DCS code (eg. "023I" or "023N"); must match one of the codes specified in DCS_CODES (see index.js)
-		- A Motorola PL tone name (eg. "XZ", "M1"); must match one of the codes specified in TONE_MAP
+		- A Motorola PL tone name (eg. "XZ", "M1"); must match one of the codes specified in PL_MAP
 - tailtone
 	- Boolean, true to turn on the 'tailtone' function, false otherwise
 - emphasis

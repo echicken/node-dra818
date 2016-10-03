@@ -36,9 +36,8 @@ radio.open(
 			radio.narrow = true;
 			radio.rxF = 146.52;
 			radio.txF = 146.52;
-			radio.CSS = DRA818.TCS;
-			radio.rxTCS = 0;
-			radio.txTCS = 0;
+			radio.rxS = 0;
+			radio.txS = 0;
 			radio.squelch = 0;
 		} catch (err) {
 			console.log(err);
@@ -54,10 +53,6 @@ radio.open(
 		- When making a Module, pass this as the 'type' argument if using a DRA818V
 	- UHF
 		- When making a Module, pass this as the 'type' argument if using a DRA818U or DRA818M
-	- TCS
-		- If using CTCSS, set Module.TCS to DRA818.TCS to tell it to use tone squelch.
-	- DCS
-		- If using CDCSS, set Module.TCS to DRA818.DCS to tell it to use digital squelch.
 	- Module(port, type)
 		- Module constructor, where 'port' is a serial port (eg. 'COM4' or '/dev/ttyS0') and 'type' is one of DRA818.VHF or DRA818.UHF
 
@@ -69,22 +64,22 @@ radio.open(
 	- Integer in the range of 0 - 8
 - narrow
 	- Boolean, true for 12.5 kHz bandwidth, false for 25 kHz bandwidth
-- CSS
-	- The Coded Squelch System in use, one of DRA818.TCS or DRA818.DCS
-- txTCS
+- rxF, txF
+	- Float, up to four digits of precision
+	- The receive (rxF) or transmit (txF) frequency, in MHz
+	- Must be within the frequency range of the DRA818 module
+		- DRA818V: 134.0000 to 174.0000
+		- DRA818U/M: 400.0000 to 480.0000
+- rxS, txS
+	- Set the tone squelch or digital code squelch in use on the receive (rxS) or transmit (txS) frequency
 	- Integer in the range of 0 - 38
-	- The TCS tone in use on the transmit frequency when in TCS mode
-	- Set to 0 to disable transmit TCS
-- rxTCS
-	- Integer in the range of 0 - 38
-	- The TCS tone in use on the receive frequency when in TCS mode
-	- Set to 0 to disable receive TCS
-- txDCS
-	- String describing the DCS code in use on the transmit frequency
-	- See the DCS_CODES array in index.js for possible values
-- rxDCS
-	- String describing the DCS code in use on the receive frequency
-	- See the DCS_CODES array in index.js for possible values
+		- 0 to disable CTCSS/CDCSS
+		- 1 - 38 to use the corresponding CTCSS code
+	- Float
+		- Use a particular CTCSS tone, by frequency in Hz; must match one of the tones specified in TONE_MAP (see index.js)
+	- String
+		- A DCS code (eg. "023I" or "023N"); must match one of the codes specified in DCS_CODES (see index.js)
+		- A Motorola PL tone name (eg. "XZ", "M1"); must match one of the codes specified in TONE_MAP
 - tailtone
 	- Boolean true to turn on the 'tailtone' function, false otherwise
 - emphasis
@@ -93,18 +88,6 @@ radio.open(
 	- Boolean, enable or disable the high-pass filter
 - lowpass
 	- Boolean, enable or disable the low-pass filter
-- rxF
-	- Float, up to four digits of precision
-	- The receive frequency, in MHz
-	- Must be within the frequency range of the DRA818 module
-		- DRA818V: 134.0000 to 174.0000
-		- DRA818U/M: 400.0000 to 480.0000
-- txF
-	- Float, up to four digits of precision
-	- The transmit frequency, in MHz
-	- Must be within the frequency range of the DRA818 module
-		- DRA818V: 134.0000 to 174.0000
-		- DRA818U/M: 400.0000 to 480.0000
 - rssi
 	- Integer in the range of 0 - 255
 	- Received Signal Strength Indicator
@@ -140,27 +123,6 @@ radio.open(
 	- The module has been disconnected
 - close
 	- The connection to the module has been closed
-
-### Notes on CTCSS and CDCSS
-
-The Module.CSS property defines which type of Coded Squelch System is currently
-in use.  This should be one of DRA818.TCS or DRA818.DCS for Tone Coded Squelch
-and Digital Code Squelch, respectively.
-
-The Module.txTCS and rxTCS properties define which tones will be used on the
-transmit and receive frequencies when Module.CSS is set to DRA818.TCS.  Set one
-or both of these to 0 if you don't want tone squelch on that frequency.
-
-The Module.txDCS and rxDCS properties define which codes will be used on the
-transmit and receive frequencies when Module.CSS is set to DRA818.DCS.  These
-values must correspond to entries in the DCS_CODES array.  (See index.js)
-
-To disable CSS, set Module.CSS to DRA818.TCS, set Module.txTCS to 0, and set
-Module.rxTCS to 0.  CSS is disabled by default.
-
-I neglected to consider that someone might want to use tone squelch on one
-frequency and digital squelch on the other.  I can make this possible if anyone
-wants it.
 
 ### Notes on the model
 
